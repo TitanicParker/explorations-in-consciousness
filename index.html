@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Explorations in Consciousness</title>
 
+  <meta name="theme-color" content="#fcfbf7" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Open Field" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
@@ -151,10 +159,10 @@
       transform: translateX(-50%);
       z-index: 5;
       display: grid;
-      grid-template-columns: auto auto minmax(120px, 1fr);
+      grid-template-columns: auto auto auto minmax(100px, 1fr);
       gap: 9px;
       align-items: center;
-      width: min(560px, calc(100vw - 24px));
+      width: min(620px, calc(100vw - 24px));
       min-height: var(--control-height);
       padding: 10px 12px;
       border-radius: 999px;
@@ -179,6 +187,7 @@
       cursor: pointer;
       box-shadow: none;
       touch-action: manipulation;
+      white-space: nowrap;
     }
 
     button:hover { background: rgba(255, 252, 246, 0.9); }
@@ -200,12 +209,12 @@
       :root { --control-height: 68px; }
 
       .controls {
-        grid-template-columns: auto auto 1fr;
-        gap: 7px;
-        padding: 9px 10px;
+        grid-template-columns: auto auto auto 1fr;
+        gap: 6px;
+        padding: 9px 9px;
       }
 
-      button { padding: 8px 11px; }
+      button { padding: 8px 10px; }
       .speed-control span { display: none; }
 
       .page {
@@ -216,6 +225,11 @@
 
       .subtitle { margin-bottom: 76px; }
       .hint { display: none; }
+    }
+
+    @media (max-width: 390px) {
+      .controls { font-size: 15px; }
+      button { padding-inline: 8px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -239,6 +253,7 @@
   <div class="controls" aria-label="Reader controls">
     <button id="playPause">Pause</button>
     <button id="restart">Restart</button>
+    <button id="fullscreen">Full</button>
     <label class="speed-control">
       <span>Speed</span>
       <input id="speed" type="range" min="90" max="360" value="178" />
@@ -250,6 +265,7 @@
     const reader = document.getElementById("reader");
     const playPause = document.getElementById("playPause");
     const restart = document.getElementById("restart");
+    const fullscreen = document.getElementById("fullscreen");
     const speed = document.getElementById("speed");
 
     let text = "";
@@ -371,8 +387,28 @@
       setTimeout(start, 420);
     }
 
+    function updateFullscreenLabel() {
+      fullscreen.textContent = document.fullscreenElement ? "Exit" : "Full";
+    }
+
+    async function toggleFullscreen() {
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        } else if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        }
+      } catch (_) {
+        fullscreen.textContent = "Add to Home";
+      }
+
+      updateFullscreenLabel();
+    }
+
     playPause.addEventListener("click", () => running ? pause() : start());
     restart.addEventListener("click", resetReader);
+    fullscreen.addEventListener("click", toggleFullscreen);
+    document.addEventListener("fullscreenchange", updateFullscreenLabel);
 
     window.addEventListener("resize", () => {
       const active = spans[index - 1];
