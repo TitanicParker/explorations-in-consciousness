@@ -39,6 +39,7 @@
       color: var(--ink);
       background: linear-gradient(180deg, var(--paper-top) 0%, var(--paper-mid) 52%, var(--paper-bottom) 100%);
       font-family: "Cormorant Garamond", serif;
+      touch-action: manipulation;
     }
 
     body::before {
@@ -121,9 +122,7 @@
       color: rgba(57, 39, 30, 0.90);
     }
 
-    #reader p {
-      margin: 0 0 0.78em;
-    }
+    #reader p { margin: 0 0 0.78em; }
 
     .hint {
       font-size: clamp(17px, 4vw, 21px);
@@ -139,21 +138,29 @@
       position: fixed;
       left: 50%;
       bottom: max(14px, env(safe-area-inset-bottom));
-      transform: translateX(-50%);
+      transform: translateX(-50%) translateY(0);
       z-index: 5;
       display: grid;
-      grid-template-columns: auto auto auto minmax(100px, 1fr);
+      grid-template-columns: auto auto auto minmax(112px, 1fr) auto;
       gap: 9px;
       align-items: center;
-      width: min(620px, calc(100vw - 24px));
+      width: min(680px, calc(100vw - 24px));
       min-height: var(--control-height);
       padding: 10px 12px;
       border-radius: 999px;
       border: 1px solid rgba(120, 96, 72, 0.16);
-      background: rgba(255, 250, 240, 0.78);
+      background: rgba(255, 250, 240, 0.84);
       box-shadow: 0 10px 24px rgba(72, 54, 36, 0.08);
       font-size: clamp(16px, 4vw, 18px);
       color: rgba(60, 43, 35, 0.72);
+      opacity: 1;
+      transition: opacity 280ms ease, transform 280ms ease;
+    }
+
+    .controls.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(calc(100% + 24px));
     }
 
     button,
@@ -173,7 +180,7 @@
 
     button:hover { background: rgba(255, 252, 246, 0.9); }
 
-    .duration-control {
+    .speed-control {
       display: flex;
       gap: 8px;
       align-items: center;
@@ -182,21 +189,29 @@
 
     input[type="range"] {
       width: 100%;
-      min-width: 84px;
+      min-width: 96px;
       accent-color: #9b8b7a;
+    }
+
+    .time-readout {
+      min-width: 36px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: rgba(60, 43, 35, 0.62);
     }
 
     @media (max-width: 540px) {
       :root { --control-height: 68px; }
 
       .controls {
-        grid-template-columns: auto auto auto 1fr;
+        grid-template-columns: auto auto auto 1fr auto;
         gap: 6px;
         padding: 9px 9px;
       }
 
       button { padding: 8px 10px; }
-      .duration-control span { display: none; }
+      .speed-control span { display: none; }
+      input[type="range"] { min-width: 80px; }
 
       .page {
         width: 93vw;
@@ -211,12 +226,13 @@
     @media (max-width: 390px) {
       .controls { font-size: 15px; }
       button { padding-inline: 8px; }
+      .time-readout { min-width: 30px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="viewport">
+  <div class="viewport" id="viewport">
     <main class="page" id="page">
       <div class="title">Explorations in Consciousness</div>
       <div class="subtitle">Be the Open Field</div>
@@ -225,14 +241,15 @@
     </main>
   </div>
 
-  <div class="controls" aria-label="Reader controls">
+  <div class="controls" id="controls" aria-label="Reader controls">
     <button id="playPause">Pause</button>
     <button id="restart">Restart</button>
     <button id="fullscreen">Full</button>
-    <label class="duration-control">
-      <span>Minutes</span>
-      <input id="duration" type="range" min="10" max="25" value="17" />
+    <label class="speed-control">
+      <span>Speed</span>
+      <input id="speed" type="range" min="10" max="25" value="17" step="1" />
     </label>
+    <span class="time-readout" id="timeReadout">17m</span>
   </div>
 
   <script>
@@ -241,7 +258,9 @@
     const playPause = document.getElementById("playPause");
     const restart = document.getElementById("restart");
     const fullscreen = document.getElementById("fullscreen");
-    const duration = document.getElementById("duration");
+    const speed = document.getElementById("speed");
+    const controls = document.getElementById("controls");
+    const timeReadout = document.getElementById("timeReadout");
 
     let text = "";
     let running = false;
@@ -250,6 +269,7 @@
     let elapsedBeforePause = 0;
     let maxTravel = 0;
     let currentY = 0;
+    let hideControlsTimer = null;
 
     function cleanText(content) {
       return content
@@ -282,7 +302,11 @@
     }
 
     function totalDurationMs() {
-      return Number(duration.value) * 60 * 1000;
+      return Number(speed.value) * 60 * 1000;
+    }
+
+    function currentProgress() {
+      return maxTravel ? Math.min(currentY / maxTravel, 1) : 0;
     }
 
     function step(now) {
@@ -309,6 +333,7 @@
       startTime = performance.now();
       cancelAnimationFrame(animationFrame);
       animationFrame = requestAnimationFrame(step);
+      scheduleControlsHide();
     }
 
     function pause() {
@@ -317,6 +342,7 @@
       playPause.textContent = "Play";
       elapsedBeforePause += performance.now() - startTime;
       cancelAnimationFrame(animationFrame);
+      showControls(false);
     }
 
     function resetReader() {
@@ -326,11 +352,48 @@
       elapsedBeforePause = 0;
       currentY = 0;
       applyPosition();
+      showControls();
       setTimeout(start, 240);
+    }
+
+    function updateSpeedFromControl() {
+      const progress = currentProgress();
+      timeReadout.textContent = `${speed.value}m`;
+      elapsedBeforePause = progress * totalDurationMs();
+      startTime = performance.now();
+
+      if (running) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = requestAnimationFrame(step);
+      }
+    }
+
+    function isImmersiveMode() {
+      return Boolean(document.fullscreenElement) ||
+        window.matchMedia("(display-mode: fullscreen)").matches ||
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true;
+    }
+
+    function showControls(allowAutoHide = true) {
+      controls.classList.remove("hidden");
+      if (hideControlsTimer) clearTimeout(hideControlsTimer);
+      if (allowAutoHide) scheduleControlsHide();
+    }
+
+    function scheduleControlsHide() {
+      if (hideControlsTimer) clearTimeout(hideControlsTimer);
+
+      if (!isImmersiveMode() || !running) return;
+
+      hideControlsTimer = setTimeout(() => {
+        controls.classList.add("hidden");
+      }, 2200);
     }
 
     function updateFullscreenLabel() {
       fullscreen.textContent = document.fullscreenElement ? "Exit" : "Full";
+      showControls();
     }
 
     async function toggleFullscreen() {
@@ -352,14 +415,24 @@
     fullscreen.addEventListener("click", toggleFullscreen);
     document.addEventListener("fullscreenchange", updateFullscreenLabel);
 
-    duration.addEventListener("input", () => {
-      if (!running) return;
-      const progress = maxTravel ? currentY / maxTravel : 0;
-      elapsedBeforePause = progress * totalDurationMs();
-      startTime = performance.now();
+    speed.addEventListener("input", updateSpeedFromControl);
+    speed.addEventListener("change", updateSpeedFromControl);
+
+    ["pointerdown", "touchstart", "mousemove", "keydown"].forEach(eventName => {
+      document.addEventListener(eventName, () => showControls(), { passive: true });
     });
 
-    window.addEventListener("resize", recalculateTravel);
+    controls.addEventListener("pointerdown", () => showControls(false));
+    controls.addEventListener("pointerup", () => scheduleControlsHide());
+    controls.addEventListener("touchstart", () => showControls(false), { passive: true });
+    controls.addEventListener("touchend", () => scheduleControlsHide(), { passive: true });
+
+    window.addEventListener("resize", () => {
+      const progress = currentProgress();
+      recalculateTravel();
+      currentY = maxTravel * progress;
+      applyPosition();
+    });
 
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) pause();
@@ -370,6 +443,7 @@
       .then(content => {
         text = cleanText(content);
         buildText();
+        timeReadout.textContent = `${speed.value}m`;
         setTimeout(start, 520);
       })
       .catch(() => {
