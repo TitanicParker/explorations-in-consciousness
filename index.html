@@ -20,9 +20,7 @@
       --control-height: 74px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html,
     body {
@@ -87,22 +85,22 @@
       left: 0;
       right: 0;
       top: 46vh;
-      height: clamp(82px, 16vh, 120px);
+      height: clamp(78px, 14vh, 112px);
       transform: translateY(-50%);
       pointer-events: none;
       z-index: 1;
-      background: linear-gradient(90deg, transparent, rgba(210, 230, 250, 0.20), rgba(255, 255, 255, 0.24), rgba(170, 205, 235, 0.22), transparent);
+      background: linear-gradient(90deg, transparent, rgba(210, 230, 250, 0.16), rgba(255, 255, 255, 0.24), rgba(170, 205, 235, 0.18), transparent);
       box-shadow:
-        0 0 54px rgba(185, 220, 248, 0.26),
-        0 0 88px rgba(220, 235, 255, 0.20),
-        inset 0 1px 0 rgba(255,255,255,0.38),
-        inset 0 -1px 0 rgba(255,255,255,0.30);
+        0 0 54px rgba(185, 220, 248, 0.22),
+        0 0 88px rgba(220, 235, 255, 0.18),
+        inset 0 1px 0 rgba(255,255,255,0.34),
+        inset 0 -1px 0 rgba(255,255,255,0.26);
       animation: haloPulse 7s ease-in-out infinite alternate;
     }
 
     @keyframes haloPulse {
-      from { opacity: 0.56; filter: blur(0px); }
-      to { opacity: 0.9; filter: blur(2px); }
+      from { opacity: 0.50; filter: blur(0px); }
+      to { opacity: 0.82; filter: blur(2px); }
     }
 
     .viewport {
@@ -113,9 +111,9 @@
     }
 
     .page {
-      width: min(820px, 94vw);
+      width: min(760px, 91vw);
       margin: 0 auto;
-      padding: 42vh clamp(14px, 4vw, 28px) calc(62vh + var(--control-height));
+      padding: 34vh clamp(18px, 5vw, 34px) calc(66vh + var(--control-height));
       position: relative;
       will-change: transform;
       transform: translate3d(0, 0, 0);
@@ -123,9 +121,9 @@
 
     .title {
       text-align: center;
-      font-size: clamp(22px, 6vw, 44px);
+      font-size: clamp(20px, 5vw, 39px);
       font-weight: 500;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.075em;
       margin-bottom: 8px;
       color: rgba(55, 70, 88, 0.58);
       text-transform: uppercase;
@@ -134,42 +132,42 @@
 
     .subtitle {
       text-align: center;
-      font-size: clamp(17px, 4.2vw, 25px);
+      font-size: clamp(16px, 3.8vw, 23px);
       font-weight: 500;
       letter-spacing: 0.08em;
-      margin: 0 0 clamp(30px, 8vw, 46px);
+      margin: 0 0 clamp(72px, 16vh, 128px);
       color: rgba(55, 70, 88, 0.48);
       text-transform: uppercase;
       text-shadow: 0 0 18px rgba(255,255,255,0.68), 0 0 28px rgba(185, 220, 248, 0.30);
     }
 
     #reader {
-      font-size: clamp(26px, 8.2vw, 46px);
-      line-height: 1.5;
-      letter-spacing: clamp(0.01em, 0.45vw, 0.035em);
+      font-size: clamp(22px, 6.2vw, 37px);
+      line-height: 1.72;
+      letter-spacing: clamp(0.006em, 0.16vw, 0.024em);
       font-weight: 500;
       text-rendering: optimizeLegibility;
-      color: rgba(57, 39, 30, 0.90);
+      color: rgba(57, 39, 30, 0.88);
     }
 
     .word {
       opacity: 0;
       display: inline-block;
-      transform: translate3d(0, 6px, 0) scale(0.99);
-      filter: blur(3px);
-      margin-right: 0.18em;
+      transform: translate3d(0, 4px, 0);
+      filter: blur(2px);
+      margin-right: 0.15em;
       transition:
-        opacity 320ms ease,
-        transform 440ms cubic-bezier(.16,.84,.22,1),
-        filter 440ms ease,
+        opacity 300ms ease,
+        transform 420ms cubic-bezier(.16,.84,.22,1),
+        filter 420ms ease,
         color 420ms ease,
         text-shadow 580ms ease;
       will-change: opacity, transform, filter;
     }
 
     .word.visible {
-      opacity: 0.9;
-      transform: translate3d(0, 0, 0) scale(1);
+      opacity: 0.72;
+      transform: translate3d(0, 0, 0);
       filter: blur(0);
     }
 
@@ -178,21 +176,23 @@
       color: #4d382d;
       text-shadow:
         0 0 8px rgba(255,255,255,0.94),
-        0 0 18px rgba(215,230,248,0.60),
-        0 0 34px rgba(185,220,248,0.32),
-        0 0 52px rgba(170,205,235,0.22);
+        0 0 18px rgba(215,230,248,0.58),
+        0 0 30px rgba(185,220,248,0.28);
     }
 
-    .punctuation-pause {
-      margin-right: 0.36em;
+    .paragraph-break {
+      display: block;
+      height: 0.78em;
     }
+
+    .punctuation-pause { margin-right: 0.32em; }
 
     .hint {
       font-size: clamp(17px, 4vw, 21px);
       line-height: 1.45;
-      color: rgba(55, 70, 88, 0.46);
+      color: rgba(55, 70, 88, 0.42);
       text-align: center;
-      margin: 44px auto 0;
+      margin: 56px auto 0;
       max-width: 640px;
       text-shadow: 0 0 22px rgba(255,255,255,0.52);
     }
@@ -221,9 +221,7 @@
     }
 
     button,
-    input {
-      font: inherit;
-    }
+    input { font: inherit; }
 
     button {
       border: 1px solid rgba(120, 150, 180, 0.26);
@@ -236,9 +234,7 @@
       touch-action: manipulation;
     }
 
-    button:hover {
-      background: rgba(245, 250, 255, 0.9);
-    }
+    button:hover { background: rgba(245, 250, 255, 0.9); }
 
     .speed-control {
       display: flex;
@@ -262,39 +258,24 @@
         padding: 9px 10px;
       }
 
-      button {
-        padding: 8px 11px;
-      }
-
-      .speed-control span {
-        display: none;
-      }
+      button { padding: 8px 11px; }
+      .speed-control span { display: none; }
 
       .page {
-        width: 96vw;
-        padding-top: 41vh;
-        padding-inline: 14px;
+        width: 93vw;
+        padding-top: 32vh;
+        padding-inline: 20px;
       }
 
-      .subtitle {
-        margin-bottom: 32px;
-      }
-
-      .hint {
-        display: none;
-      }
+      .subtitle { margin-bottom: 76px; }
+      .hint { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
       body,
       body::after,
-      .eye-line {
-        animation: none;
-      }
-
-      .word {
-        transition-duration: 160ms;
-      }
+      .eye-line { animation: none; }
+      .word { transition-duration: 160ms; }
     }
   </style>
 </head>
@@ -328,7 +309,6 @@
     const speed = document.getElementById("speed");
 
     let text = "";
-    let words = [];
     let spans = [];
     let index = 0;
     let running = false;
@@ -336,6 +316,12 @@
     let motionFrame = null;
     let currentY = 0;
     let targetY = 0;
+
+    function cleanText(content) {
+      return content
+        .replace(/^\s*#\s*Be the Open Field\s*/i, "")
+        .trim();
+    }
 
     function applyPagePosition() {
       page.style.transform = `translate3d(0, ${currentY}px, 0)`;
@@ -346,11 +332,9 @@
 
       function frame() {
         const distance = targetY - currentY;
-        currentY += distance * 0.075;
+        currentY += distance * 0.045;
 
-        if (Math.abs(distance) < 0.05) {
-          currentY = targetY;
-        }
+        if (Math.abs(distance) < 0.04) currentY = targetY;
 
         applyPagePosition();
         motionFrame = requestAnimationFrame(frame);
@@ -359,26 +343,32 @@
       motionFrame = requestAnimationFrame(frame);
     }
 
-    function stopMotionLoop() {
-      if (motionFrame) cancelAnimationFrame(motionFrame);
-      motionFrame = null;
-    }
-
     function buildText() {
       reader.innerHTML = "";
-      words = text.trim().split(/\s+/).filter(Boolean);
+      spans = [];
 
-      spans = words.map((word) => {
-        const span = document.createElement("span");
-        span.className = "word";
-        span.textContent = word;
+      const paragraphs = text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
 
-        if (/[,.!?;:]$/.test(word)) {
-          span.classList.add("punctuation-pause");
+      paragraphs.forEach((paragraph, paragraphIndex) => {
+        const words = paragraph.split(/\s+/).filter(Boolean);
+
+        words.forEach((word) => {
+          const span = document.createElement("span");
+          span.className = "word";
+          span.textContent = word;
+
+          if (/[,.!?;:]$/.test(word)) span.classList.add("punctuation-pause");
+
+          reader.appendChild(span);
+          spans.push(span);
+        });
+
+        if (paragraphIndex < paragraphs.length - 1) {
+          const breakSpan = document.createElement("span");
+          breakSpan.className = "paragraph-break";
+          breakSpan.setAttribute("aria-hidden", "true");
+          reader.appendChild(breakSpan);
         }
-
-        reader.appendChild(span);
-        return span;
       });
     }
 
@@ -391,10 +381,8 @@
 
     function delayFor(word) {
       const base = Number(speed.value);
-
       if (/[.!?]$/.test(word)) return base * 2.15;
       if (/[,;:]$/.test(word)) return base * 1.38;
-
       return base;
     }
 
@@ -439,10 +427,7 @@
       setTimeout(start, 420);
     }
 
-    playPause.addEventListener("click", () => {
-      running ? pause() : start();
-    });
-
+    playPause.addEventListener("click", () => running ? pause() : start());
     restart.addEventListener("click", resetReader);
 
     window.addEventListener("resize", () => {
@@ -454,10 +439,10 @@
       if (document.hidden) pause();
     });
 
-    fetch("text.txt")
+    fetch(`text.txt?v=${Date.now()}`, { cache: "no-store" })
       .then(response => response.text())
       .then(content => {
-        text = content;
+        text = cleanText(content);
         buildText();
         startMotionLoop();
         setTimeout(start, 520);
