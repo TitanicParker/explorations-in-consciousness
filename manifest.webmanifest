@@ -1,0 +1,20 @@
+{
+  "name": "Explorations in Consciousness",
+  "short_name": "Open Field",
+  "description": "A fullscreen reader for Explorations in Consciousness.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "background_color": "#fcfbf7",
+  "theme_color": "#fcfbf7",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
