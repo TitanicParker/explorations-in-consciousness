@@ -21,6 +21,9 @@
     :root {
       --ink: #3c2b23;
       --control-height: 74px;
+      --paper-top: #fcfbf7;
+      --paper-mid: #f7f3ea;
+      --paper-bottom: #f0eadf;
     }
 
     * { box-sizing: border-box; }
@@ -34,7 +37,7 @@
 
     body {
       color: var(--ink);
-      background: linear-gradient(180deg, #fcfbf7 0%, #f7f3ea 52%, #f0eadf 100%);
+      background: linear-gradient(180deg, var(--paper-top) 0%, var(--paper-mid) 52%, var(--paper-bottom) 100%);
       font-family: "Cormorant Garamond", serif;
     }
 
@@ -50,21 +53,6 @@
       opacity: 0.22;
     }
 
-    .eye-line {
-      position: fixed;
-      left: 0;
-      right: 0;
-      top: 46vh;
-      height: clamp(70px, 12vh, 96px);
-      transform: translateY(-50%);
-      pointer-events: none;
-      z-index: 1;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.22),
-        inset 0 -1px 0 rgba(255,255,255,0.16);
-    }
-
     .viewport {
       position: fixed;
       inset: 0;
@@ -72,10 +60,31 @@
       z-index: 2;
     }
 
+    .viewport::before,
+    .viewport::after {
+      content: "";
+      position: fixed;
+      left: 0;
+      right: 0;
+      height: 18vh;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .viewport::before {
+      top: 0;
+      background: linear-gradient(180deg, var(--paper-top) 0%, rgba(252,251,247,0.86) 48%, rgba(252,251,247,0) 100%);
+    }
+
+    .viewport::after {
+      bottom: 0;
+      background: linear-gradient(0deg, var(--paper-bottom) 0%, rgba(240,234,223,0.84) 48%, rgba(240,234,223,0) 100%);
+    }
+
     .page {
       width: min(760px, 91vw);
       margin: 0 auto;
-      padding: 34vh clamp(18px, 5vw, 34px) calc(66vh + var(--control-height));
+      padding: 32vh clamp(18px, 5vw, 34px) calc(72vh + var(--control-height));
       position: relative;
       will-change: transform;
       transform: translate3d(0, 0, 0);
@@ -109,38 +118,12 @@
       letter-spacing: clamp(0.006em, 0.16vw, 0.024em);
       font-weight: 500;
       text-rendering: optimizeLegibility;
-      color: rgba(57, 39, 30, 0.88);
+      color: rgba(57, 39, 30, 0.90);
     }
 
-    .word {
-      opacity: 0;
-      display: inline-block;
-      transform: translate3d(0, 3px, 0);
-      margin-right: 0.15em;
-      transition:
-        opacity 240ms ease,
-        transform 320ms cubic-bezier(.16,.84,.22,1),
-        color 320ms ease;
-      will-change: opacity, transform;
+    #reader p {
+      margin: 0 0 0.78em;
     }
-
-    .word.visible {
-      opacity: 0.72;
-      transform: translate3d(0, 0, 0);
-    }
-
-    .word.active {
-      opacity: 1;
-      color: #4d382d;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.36);
-    }
-
-    .paragraph-break {
-      display: block;
-      height: 0.78em;
-    }
-
-    .punctuation-pause { margin-right: 0.32em; }
 
     .hint {
       font-size: clamp(17px, 4vw, 21px);
@@ -190,7 +173,7 @@
 
     button:hover { background: rgba(255, 252, 246, 0.9); }
 
-    .speed-control {
+    .duration-control {
       display: flex;
       gap: 8px;
       align-items: center;
@@ -213,7 +196,7 @@
       }
 
       button { padding: 8px 10px; }
-      .speed-control span { display: none; }
+      .duration-control span { display: none; }
 
       .page {
         width: 93vw;
@@ -229,22 +212,16 @@
       .controls { font-size: 15px; }
       button { padding-inline: 8px; }
     }
-
-    @media (prefers-reduced-motion: reduce) {
-      .word { transition-duration: 160ms; }
-    }
   </style>
 </head>
 
 <body>
-  <div class="eye-line"></div>
-
   <div class="viewport">
     <main class="page" id="page">
       <div class="title">Explorations in Consciousness</div>
       <div class="subtitle">Be the Open Field</div>
       <div id="reader" aria-live="polite"></div>
-      <div class="hint">The text reveals itself as a steady delivery, while the page rises to keep the active words near the reader's eye line.</div>
+      <div class="hint">The full text is present from the beginning. The page moves at a gentle prompter pace.</div>
     </main>
   </div>
 
@@ -252,9 +229,9 @@
     <button id="playPause">Pause</button>
     <button id="restart">Restart</button>
     <button id="fullscreen">Full</button>
-    <label class="speed-control">
-      <span>Speed</span>
-      <input id="speed" type="range" min="90" max="360" value="160" />
+    <label class="duration-control">
+      <span>Minutes</span>
+      <input id="duration" type="range" min="10" max="25" value="17" />
     </label>
   </div>
 
@@ -264,16 +241,15 @@
     const playPause = document.getElementById("playPause");
     const restart = document.getElementById("restart");
     const fullscreen = document.getElementById("fullscreen");
-    const speed = document.getElementById("speed");
+    const duration = document.getElementById("duration");
 
     let text = "";
-    let spans = [];
-    let index = 0;
     let running = false;
-    let timer = null;
-    let motionFrame = null;
+    let animationFrame = null;
+    let startTime = 0;
+    let elapsedBeforePause = 0;
+    let maxTravel = 0;
     let currentY = 0;
-    let targetY = 0;
 
     function cleanText(content) {
       return content
@@ -281,108 +257,76 @@
         .trim();
     }
 
-    function applyPagePosition() {
-      page.style.transform = `translate3d(0, ${currentY}px, 0)`;
-    }
-
-    function startMotionLoop() {
-      if (motionFrame) return;
-
-      function frame() {
-        const distance = targetY - currentY;
-        currentY += distance * 0.045;
-
-        if (Math.abs(distance) < 0.04) currentY = targetY;
-
-        applyPagePosition();
-        motionFrame = requestAnimationFrame(frame);
-      }
-
-      motionFrame = requestAnimationFrame(frame);
+    function escapeHtml(value) {
+      return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
     }
 
     function buildText() {
-      reader.innerHTML = "";
-      spans = [];
-
       const paragraphs = text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
-
-      paragraphs.forEach((paragraph, paragraphIndex) => {
-        const words = paragraph.split(/\s+/).filter(Boolean);
-
-        words.forEach((word) => {
-          const span = document.createElement("span");
-          span.className = "word";
-          span.textContent = word;
-
-          if (/[,.!?;:]$/.test(word)) span.classList.add("punctuation-pause");
-
-          reader.appendChild(span);
-          spans.push(span);
-        });
-
-        if (paragraphIndex < paragraphs.length - 1) {
-          const breakSpan = document.createElement("span");
-          breakSpan.className = "paragraph-break";
-          breakSpan.setAttribute("aria-hidden", "true");
-          reader.appendChild(breakSpan);
-        }
-      });
+      reader.innerHTML = paragraphs.map(paragraph => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`).join("");
+      recalculateTravel();
     }
 
-    function moveActiveWordTowardEyeLine(element) {
-      const rect = element.getBoundingClientRect();
-      const eyeLine = window.innerHeight * 0.46;
-      const correction = eyeLine - rect.top;
-      targetY += correction;
+    function recalculateTravel() {
+      const viewportHeight = window.innerHeight;
+      const pageHeight = page.scrollHeight;
+      maxTravel = Math.max(0, pageHeight - viewportHeight + Math.round(viewportHeight * 0.40));
+      applyPosition();
     }
 
-    function delayFor(word) {
-      const base = Number(speed.value);
-      if (/[.!?]$/.test(word)) return base * 2.15;
-      if (/[,;:]$/.test(word)) return base * 1.38;
-      return base;
+    function applyPosition() {
+      page.style.transform = `translate3d(0, ${-currentY}px, 0)`;
     }
 
-    function revealNext() {
-      if (!running || index >= spans.length) return;
+    function totalDurationMs() {
+      return Number(duration.value) * 60 * 1000;
+    }
 
-      const previous = spans[index - 1];
-      if (previous) previous.classList.remove("active");
+    function step(now) {
+      if (!running) return;
 
-      const span = spans[index];
-      span.classList.add("visible", "active");
-      moveActiveWordTowardEyeLine(span);
+      const elapsed = elapsedBeforePause + (now - startTime);
+      const progress = Math.min(elapsed / totalDurationMs(), 1);
+      currentY = maxTravel * progress;
+      applyPosition();
 
-      const nextDelay = delayFor(span.textContent);
-      index += 1;
-      timer = setTimeout(revealNext, nextDelay);
+      if (progress >= 1) {
+        running = false;
+        playPause.textContent = "Play";
+        return;
+      }
+
+      animationFrame = requestAnimationFrame(step);
     }
 
     function start() {
-      if (!spans.length) return;
-      if (index >= spans.length) index = 0;
+      if (!text) return;
       running = true;
       playPause.textContent = "Pause";
-      clearTimeout(timer);
-      startMotionLoop();
-      revealNext();
+      startTime = performance.now();
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(step);
     }
 
     function pause() {
+      if (!running) return;
       running = false;
       playPause.textContent = "Play";
-      clearTimeout(timer);
+      elapsedBeforePause += performance.now() - startTime;
+      cancelAnimationFrame(animationFrame);
     }
 
     function resetReader() {
-      pause();
-      index = 0;
+      running = false;
+      playPause.textContent = "Pause";
+      cancelAnimationFrame(animationFrame);
+      elapsedBeforePause = 0;
       currentY = 0;
-      targetY = 0;
-      applyPagePosition();
-      buildText();
-      setTimeout(start, 420);
+      applyPosition();
+      setTimeout(start, 240);
     }
 
     function updateFullscreenLabel() {
@@ -408,10 +352,14 @@
     fullscreen.addEventListener("click", toggleFullscreen);
     document.addEventListener("fullscreenchange", updateFullscreenLabel);
 
-    window.addEventListener("resize", () => {
-      const active = spans[index - 1];
-      if (active) moveActiveWordTowardEyeLine(active);
+    duration.addEventListener("input", () => {
+      if (!running) return;
+      const progress = maxTravel ? currentY / maxTravel : 0;
+      elapsedBeforePause = progress * totalDurationMs();
+      startTime = performance.now();
     });
+
+    window.addEventListener("resize", recalculateTravel);
 
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) pause();
@@ -422,7 +370,6 @@
       .then(content => {
         text = cleanText(content);
         buildText();
-        startMotionLoop();
         setTimeout(start, 520);
       })
       .catch(() => {
